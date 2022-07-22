@@ -9,10 +9,19 @@ async function generatePdf(file, options, callback) {
     '--no-sandbox',
     '--disable-setuid-sandbox',
   ];
+  let puppeteerConf = {
+    waitUntil:[ 'load', 'networkidle0'],
+  }
+
   if(options.args) {
     args = options.args;
     delete options.args;
   }
+
+  if(options.puppeteer) {
+    puppeteerConf = options.puppeteer;
+    delete options.puppeteer;
+}
 
   const browser = await puppeteer.launch({
     args: args
@@ -28,13 +37,9 @@ async function generatePdf(file, options, callback) {
     const html = result;
 
     // We set the page content as the generated html by handlebars
-    await page.setContent(html, {
-      waitUntil: 'networkidle0', // wait for page to load completely
-    });
+    await page.setContent(html, puppeteerConf);
   } else {
-    await page.goto(file.url, {
-      waitUntil:[ 'load', 'networkidle0'], // wait for page to load completely
-    });
+    await page.goto(file.url, puppeteerConf);
   }
 
   return Promise.props(page.pdf(options))
